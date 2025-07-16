@@ -1,0 +1,141 @@
+---
+title: "The Lost Lab Notebook — Day 1"
+output:
+  learnr::tutorial:
+    progressive: true
+runtime: shiny_prerendered
+
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(readr)
+library(janitor)
+library(lubridate)
+library(rsconnect)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(tutorial.storage = NULL)
+
+# ── Raw data the scientist left behind ────────────────────────────────────────
+
+day1_data <- tibble::tibble(
+  experiment_id = c("exp_001", "exp_002", NA, "exp_003", "exp_004", "exp_005"),
+  timestamp     = c(
+    "2025-07-01 09:00:00",
+    "2025-07-01 09:05:00",
+    "2025-07-01 09:10:00",
+    "202507-01 9-15-00",   # <‑ deliberately malformed
+    "2025-07-01 09:20:00",
+    "2025-07-01 09:25:00"
+  ),
+  comment       = c(
+    "##$$",
+    "TFVNRU5f",
+    "1265435O27",
+    "HFRSAVW7Dt",
+    "####$%",
+    "jiiflpa_"
+  ),
+  value         = c(12.5, 13.7, 14.1, 11.9, 15.2, 12.7)
+)
+```
+
+---
+
+## Introduction
+
+this is going to be an introduction
+
+## Day 1
+
+###  Welcome, Investigator
+You’ve unearthed a forgotten research drive from a long‑abandoned experiment. 
+Inside you find a corrupted CSV: messy timestamps, cryptic notes, and—rumour has it—
+a *hidden* fragment of a larger message.  
+Your first mission is to clean this chaos and extract the fragment.
+To do this you'll need to:
+
+1. Clean up the mess,
+
+1. Extract only meaningful entries,
+
+1. Decode the comment field.
+
+
+
+### Take a Peek
+Have a look at the raw file to get your bearings.
+
+```{r peek, exercise = FALSE}
+day1_data
+```
+
+---
+
+
+### Your Mission
+
+To uncover the clue you will need to clean the data and extract the valid fragments by:
+
+1. Keeping only rows where `experiment_id` is not missing
+
+1. Remove rows with invalid timestamps
+
+1. Creating a new column `fragment` that contains the comment only if it's alphanumeric (A–Z, a–z, 0–9)
+
+1. Filtering to keep only rows where `fragment` is not missing
+
+```{r mission, exercise = TRUE, exercise.lines = 10}
+# YOUR TURN
+```
+
+
+```{r mission-hint-1}
+# Use dplyr::filter() to remove rows where experiment_id is NA
+```
+
+```{r mission-hint-2}
+# Use parse_date_time() from lubridate to convert timestamp into a datetime column
+# Then filter out rows where the result is NA
+```
+
+```{r mission-hint-3}
+# Use str_detect() to check if comment matches the pattern "^[A-Za-z0-9]+$"
+```
+
+```{r mission-hint-4}
+# Use filter() again to remove rows with NA in the `fragment` column
+```
+
+
+```{r mission-solution, exercise.reveal_solution = FALSE}
+final_fragments <- day1_data |> 
+  filter(!is.na(experiment_id)) |> 
+  mutate(
+    time = parse_date_time(timestamp, orders = c("ymd HMS", "Ymd HMS")),
+    fragment = ifelse(str_detect(comment, "^[A-Za-z0-9]+$"), comment, NA_character_)
+  )  |> 
+  filter(!is.na(time), !is.na(fragment))
+
+final_fragments
+```
+
+---
+
+### Submit Your Answer
+What *is* the surviving fragment?
+
+```{r question, echo = FALSE}
+question_text(
+  "Enter the surviving fragment:",
+  answer("TFVNRU5f", correct = TRUE),
+  answer("HFRSAVW7Dt", message = "Close, but not quite—double‑check your filters!"),
+  allow_retry = TRUE
+)
+```
+
+Congratulations! You’ve wrestled Day 1’s chaos into order and pried loose the first piece of the Lab’s secret!
+
