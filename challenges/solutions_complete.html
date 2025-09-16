@@ -154,8 +154,8 @@ fragment</code></pre>
 <script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":false,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
 </div>
 </div>
-<div id="section-solution-to-challenge-3" class="section level3">
-<h3>Solution to Challenge 3</h3>
+<div id="section-solution-to-challenge-3" class="section level4">
+<h4>Solution to Challenge 3</h4>
 <div class="tutorial-exercise" data-label="day3-solution"
 data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0" data-pipe="|&gt;">
@@ -185,8 +185,8 @@ fragment</code></pre>
 <script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":false,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
 </div>
 </div>
-<div id="section-solution-to-challenge-4" class="section level3">
-<h3>Solution to Challenge 4</h3>
+<div id="section-solution-to-challenge-4" class="section level4">
+<h4>Solution to Challenge 4</h4>
 <div class="tutorial-exercise" data-label="day4-solution"
 data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0" data-pipe="|&gt;">
@@ -219,27 +219,35 @@ library(tibble)
 library(tidyr)
 library(purrr)
 library(magrittr)
+library(rsconnect)
 library(base64enc)
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 options(tutorial.storage = NULL)
 
-# Day 1 Data Setup
+# Raw data the scientist left behind
+
 day1_data <- tibble::tibble(
   experiment_id = c("exp_001", "exp_002", NA, "exp_003", "exp_004", "exp_005"),
-  timestamp = c(
-    "2025-03-15 14:30:22", "2025/03/15 15:45:10", 
-    "2025-03-16 09:15:45", "CORRUPTED_TIME", 
-    "2025-03-17 11:22:33", "2025-03-18 16:45:12"
+  timestamp     = c(
+    "2025-07-01 09:00:00",
+    "2025-07-01 09:05:00",
+    "2025-07-01 09:10:00",
+  "202507-01 9-15-00",   # deliberately malformed
+    "2025-07-01 09:20:00",
+    "2025-07-01 09:25:00"
   ),
-  measurement = c(42.3, 38.1, NA, 55.7, 41.2, 39.9),
-  comment = c(
-    "U09NRVRISU5H", "baseline reading", "HFRSAVW7Dt", 
-    "anomaly detected", "normal operation", "SElEREVO"
-  )
+  comment       = c(
+    "##$$",
+    "U09NRVRISU5H", 
+    "1265435O27",
+    "HFRSAVW7Dt",
+    "####$%",
+    "jiiflpa_"
+  ),
+  value         = c(12.5, 13.7, 14.1, 11.9, 15.2, 12.7)
 )
 
-# Day 2 Data Setup
 inventory <- tibble::tibble(
   item_code = c(
     "SE-2025-001", "BX-2024-007", "lE-2025-002", "RE-2025-003", 
@@ -253,6 +261,11 @@ inventory <- tibble::tibble(
   )
 )
 
+
+
+
+# Safety Manifest
+# Only items listed here were cleared for final use
 safety_manifest <- tibble::tibble(
   ID = c(
     "SE", "RE", "AX", "lE", "GT", "BX", "CZ", "MD", "QT", "LP", "VO", "XV"
@@ -262,12 +275,19 @@ safety_manifest <- tibble::tibble(
   )
 )
 
-# Day 3 Data Setup
 coordinates <- tibble::tibble(
   lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),
   lon = c(-2.2330, -2.2345, -2.2320, -2.2338, -2.2342, -2.2328, -2.2347),
   tag = c("MQlV", "SU4", "STg==", "gS0l", NA, "??4V", "SU*4")
 )
+
+
+
+# Base64 fragments from earlier days
+# "Something" -> "U29tZXRoaW5n"
+# "Hidden"    -> "SGlkZGVu"
+# "IN KILBURN" -> "SU4gS0lMQlVSTg=="
+
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
@@ -302,30 +322,32 @@ output$`tutorial-exercise-day1-solution-output` <- renderUI({
 learnr:::store_exercise_cache(structure(list(label = "day1-solution", global_setup = structure(c("library(learnr)", 
 "library(dplyr)", "library(ggplot2)", "library(stringr)", "library(readr)", 
 "library(janitor)", "library(lubridate)", "library(tibble)", 
-"library(tidyr)", "library(purrr)", "library(magrittr)", "library(base64enc)", 
-"", "knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)", 
-"options(tutorial.storage = NULL)", "", "# Day 1 Data Setup", 
-"day1_data <- tibble::tibble(", "  experiment_id = c(\"exp_001\", \"exp_002\", NA, \"exp_003\", \"exp_004\", \"exp_005\"),", 
-"  timestamp = c(", "    \"2025-03-15 14:30:22\", \"2025/03/15 15:45:10\", ", 
-"    \"2025-03-16 09:15:45\", \"CORRUPTED_TIME\", ", "    \"2025-03-17 11:22:33\", \"2025-03-18 16:45:12\"", 
-"  ),", "  measurement = c(42.3, 38.1, NA, 55.7, 41.2, 39.9),", 
-"  comment = c(", "    \"U09NRVRISU5H\", \"baseline reading\", \"HFRSAVW7Dt\", ", 
-"    \"anomaly detected\", \"normal operation\", \"SElEREVO\"", 
-"  )", ")", "", "# Day 2 Data Setup", "inventory <- tibble::tibble(", 
-"  item_code = c(", "    \"SE-2025-001\", \"BX-2024-007\", \"lE-2025-002\", \"RE-2025-003\", ", 
+"library(tidyr)", "library(purrr)", "library(magrittr)", "library(rsconnect)", 
+"library(base64enc)", "", "knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)", 
+"options(tutorial.storage = NULL)", "", "# Raw data the scientist left behind", 
+"", "day1_data <- tibble::tibble(", "  experiment_id = c(\"exp_001\", \"exp_002\", NA, \"exp_003\", \"exp_004\", \"exp_005\"),", 
+"  timestamp     = c(", "    \"2025-07-01 09:00:00\",", "    \"2025-07-01 09:05:00\",", 
+"    \"2025-07-01 09:10:00\",", "  \"202507-01 9-15-00\",   # deliberately malformed", 
+"    \"2025-07-01 09:20:00\",", "    \"2025-07-01 09:25:00\"", 
+"  ),", "  comment       = c(", "    \"##$$\",", "    \"U09NRVRISU5H\", ", 
+"    \"1265435O27\",", "    \"HFRSAVW7Dt\",", "    \"####$%\",", 
+"    \"jiiflpa_\"", "  ),", "  value         = c(12.5, 13.7, 14.1, 11.9, 15.2, 12.7)", 
+")", "", "inventory <- tibble::tibble(", "  item_code = c(", 
+"    \"SE-2025-001\", \"BX-2024-007\", \"lE-2025-002\", \"RE-2025-003\", ", 
 "    \"BX-2022-099\", \"XV-2025-010\", \"AX-2025-005\", \"RE-2024-015\",", 
 "    \"SE-2025-011\", \"lE-2025-012\", \"VO-2025-013\", \"XV-2025-014\"", 
 "  ),", "  measurement = c(42.1, 75.2, 49.7, 38.9, 120.4, 45.3, 33.8, 60.1, 47.0, 25.5, 49.9, 20.1),", 
 "  month = c(", "    \"August\", \"July\", \"August\", \"August\", \"August\", ", 
 "    \"June\", \"August\", \"August\", \"July\", \"July\", \"August\", \"June\"", 
-"  )", ")", "", "safety_manifest <- tibble::tibble(", "  ID = c(", 
-"    \"SE\", \"RE\", \"AX\", \"lE\", \"GT\", \"BX\", \"CZ\", \"MD\", \"QT\", \"LP\", \"VO\", \"XV\"", 
+"  )", ")", "", "", "", "", "# Safety Manifest", "# Only items listed here were cleared for final use", 
+"safety_manifest <- tibble::tibble(", "  ID = c(", "    \"SE\", \"RE\", \"AX\", \"lE\", \"GT\", \"BX\", \"CZ\", \"MD\", \"QT\", \"LP\", \"VO\", \"XV\"", 
 "  ),", "  clearance_level = c(", "    \"high\", \"high\", \"medium\", \"high\", \"high\", \"low\", \"medium\", \"low\", \"high\", \"medium\", \"high\", \"high\"", 
-"  )", ")", "", "# Day 3 Data Setup", "coordinates <- tibble::tibble(", 
-"  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),", 
+"  )", ")", "", "coordinates <- tibble::tibble(", "  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),", 
 "  lon = c(-2.2330, -2.2345, -2.2320, -2.2338, -2.2342, -2.2328, -2.2347),", 
 "  tag = c(\"MQlV\", \"SU4\", \"STg==\", \"gS0l\", NA, \"??4V\", \"SU*4\")", 
-")"), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+")", "", "", "", "# Base64 fragments from earlier days", "# \"Something\" -> \"U29tZXRoaW5n\"", 
+"# \"Hidden\"    -> \"SGlkZGVu\"", "# \"IN KILBURN\" -> \"SU4gS0lMQlVSTg==\"", 
+""), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
     chunks = list(list(label = "day1-solution", code = "# Filter out rows with missing experiment_id\nfragment <- day1_data |> \n  filter(!is.na(experiment_id)) |> \n  # Parse timestamp and extract valid fragments from comment\n  mutate(\n    time = parse_date_time(timestamp, orders = c(\"ymd HMS\", \"Ymd HMS\")),\n    fragment = ifelse(str_detect(comment, \"^[A-Za-z0-9]+$\"), comment, NA_character_)\n  )  |> \n  # Keep only rows with valid time and fragment\n  filter(!is.na(time), !is.na(fragment))\n\n# Show the resulting fragment(s)\nfragment", 
         opts = list(label = "\"day1-solution\"", exercise = "TRUE"), 
         engine = "r")), code_check = NULL, error_check = NULL, 
@@ -372,30 +394,32 @@ output$`tutorial-exercise-day2-solution-output` <- renderUI({
 learnr:::store_exercise_cache(structure(list(label = "day2-solution", global_setup = structure(c("library(learnr)", 
 "library(dplyr)", "library(ggplot2)", "library(stringr)", "library(readr)", 
 "library(janitor)", "library(lubridate)", "library(tibble)", 
-"library(tidyr)", "library(purrr)", "library(magrittr)", "library(base64enc)", 
-"", "knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)", 
-"options(tutorial.storage = NULL)", "", "# Day 1 Data Setup", 
-"day1_data <- tibble::tibble(", "  experiment_id = c(\"exp_001\", \"exp_002\", NA, \"exp_003\", \"exp_004\", \"exp_005\"),", 
-"  timestamp = c(", "    \"2025-03-15 14:30:22\", \"2025/03/15 15:45:10\", ", 
-"    \"2025-03-16 09:15:45\", \"CORRUPTED_TIME\", ", "    \"2025-03-17 11:22:33\", \"2025-03-18 16:45:12\"", 
-"  ),", "  measurement = c(42.3, 38.1, NA, 55.7, 41.2, 39.9),", 
-"  comment = c(", "    \"U09NRVRISU5H\", \"baseline reading\", \"HFRSAVW7Dt\", ", 
-"    \"anomaly detected\", \"normal operation\", \"SElEREVO\"", 
-"  )", ")", "", "# Day 2 Data Setup", "inventory <- tibble::tibble(", 
-"  item_code = c(", "    \"SE-2025-001\", \"BX-2024-007\", \"lE-2025-002\", \"RE-2025-003\", ", 
+"library(tidyr)", "library(purrr)", "library(magrittr)", "library(rsconnect)", 
+"library(base64enc)", "", "knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)", 
+"options(tutorial.storage = NULL)", "", "# Raw data the scientist left behind", 
+"", "day1_data <- tibble::tibble(", "  experiment_id = c(\"exp_001\", \"exp_002\", NA, \"exp_003\", \"exp_004\", \"exp_005\"),", 
+"  timestamp     = c(", "    \"2025-07-01 09:00:00\",", "    \"2025-07-01 09:05:00\",", 
+"    \"2025-07-01 09:10:00\",", "  \"202507-01 9-15-00\",   # deliberately malformed", 
+"    \"2025-07-01 09:20:00\",", "    \"2025-07-01 09:25:00\"", 
+"  ),", "  comment       = c(", "    \"##$$\",", "    \"U09NRVRISU5H\", ", 
+"    \"1265435O27\",", "    \"HFRSAVW7Dt\",", "    \"####$%\",", 
+"    \"jiiflpa_\"", "  ),", "  value         = c(12.5, 13.7, 14.1, 11.9, 15.2, 12.7)", 
+")", "", "inventory <- tibble::tibble(", "  item_code = c(", 
+"    \"SE-2025-001\", \"BX-2024-007\", \"lE-2025-002\", \"RE-2025-003\", ", 
 "    \"BX-2022-099\", \"XV-2025-010\", \"AX-2025-005\", \"RE-2024-015\",", 
 "    \"SE-2025-011\", \"lE-2025-012\", \"VO-2025-013\", \"XV-2025-014\"", 
 "  ),", "  measurement = c(42.1, 75.2, 49.7, 38.9, 120.4, 45.3, 33.8, 60.1, 47.0, 25.5, 49.9, 20.1),", 
 "  month = c(", "    \"August\", \"July\", \"August\", \"August\", \"August\", ", 
 "    \"June\", \"August\", \"August\", \"July\", \"July\", \"August\", \"June\"", 
-"  )", ")", "", "safety_manifest <- tibble::tibble(", "  ID = c(", 
-"    \"SE\", \"RE\", \"AX\", \"lE\", \"GT\", \"BX\", \"CZ\", \"MD\", \"QT\", \"LP\", \"VO\", \"XV\"", 
+"  )", ")", "", "", "", "", "# Safety Manifest", "# Only items listed here were cleared for final use", 
+"safety_manifest <- tibble::tibble(", "  ID = c(", "    \"SE\", \"RE\", \"AX\", \"lE\", \"GT\", \"BX\", \"CZ\", \"MD\", \"QT\", \"LP\", \"VO\", \"XV\"", 
 "  ),", "  clearance_level = c(", "    \"high\", \"high\", \"medium\", \"high\", \"high\", \"low\", \"medium\", \"low\", \"high\", \"medium\", \"high\", \"high\"", 
-"  )", ")", "", "# Day 3 Data Setup", "coordinates <- tibble::tibble(", 
-"  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),", 
+"  )", ")", "", "coordinates <- tibble::tibble(", "  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),", 
 "  lon = c(-2.2330, -2.2345, -2.2320, -2.2338, -2.2342, -2.2328, -2.2347),", 
 "  tag = c(\"MQlV\", \"SU4\", \"STg==\", \"gS0l\", NA, \"??4V\", \"SU*4\")", 
-")"), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+")", "", "", "", "# Base64 fragments from earlier days", "# \"Something\" -> \"U29tZXRoaW5n\"", 
+"# \"Hidden\"    -> \"SGlkZGVu\"", "# \"IN KILBURN\" -> \"SU4gS0lMQlVSTg==\"", 
+""), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
     chunks = list(list(label = "day2-solution", code = "fragment <- inventory |> \n  filter(measurement < 50) |>\n  # Step 1: split item_code into type, year, id\n  separate(item_code, into = c(\"ID\", \"year\", \"number\"), sep = \"-\") |> \n  \n  # Step 2: join with safety_manifest to keep only approved types\n  inner_join(safety_manifest, by = \"ID\") |> \n  \n  # Step 3: filter for August and measurement < 50\n  filter( month == \"August\", clearance_level == \"high\") |>\n  \n  # Step 4: extract the type column and collapse into a single string\n  pull(ID) |> \n  paste0(collapse = \"\")\n  \nfragment", 
         opts = list(label = "\"day2-solution\"", exercise = "TRUE"), 
         engine = "r")), code_check = NULL, error_check = NULL, 
@@ -443,30 +467,32 @@ output$`tutorial-exercise-day3-solution-output` <- renderUI({
 learnr:::store_exercise_cache(structure(list(label = "day3-solution", global_setup = structure(c("library(learnr)", 
 "library(dplyr)", "library(ggplot2)", "library(stringr)", "library(readr)", 
 "library(janitor)", "library(lubridate)", "library(tibble)", 
-"library(tidyr)", "library(purrr)", "library(magrittr)", "library(base64enc)", 
-"", "knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)", 
-"options(tutorial.storage = NULL)", "", "# Day 1 Data Setup", 
-"day1_data <- tibble::tibble(", "  experiment_id = c(\"exp_001\", \"exp_002\", NA, \"exp_003\", \"exp_004\", \"exp_005\"),", 
-"  timestamp = c(", "    \"2025-03-15 14:30:22\", \"2025/03/15 15:45:10\", ", 
-"    \"2025-03-16 09:15:45\", \"CORRUPTED_TIME\", ", "    \"2025-03-17 11:22:33\", \"2025-03-18 16:45:12\"", 
-"  ),", "  measurement = c(42.3, 38.1, NA, 55.7, 41.2, 39.9),", 
-"  comment = c(", "    \"U09NRVRISU5H\", \"baseline reading\", \"HFRSAVW7Dt\", ", 
-"    \"anomaly detected\", \"normal operation\", \"SElEREVO\"", 
-"  )", ")", "", "# Day 2 Data Setup", "inventory <- tibble::tibble(", 
-"  item_code = c(", "    \"SE-2025-001\", \"BX-2024-007\", \"lE-2025-002\", \"RE-2025-003\", ", 
+"library(tidyr)", "library(purrr)", "library(magrittr)", "library(rsconnect)", 
+"library(base64enc)", "", "knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)", 
+"options(tutorial.storage = NULL)", "", "# Raw data the scientist left behind", 
+"", "day1_data <- tibble::tibble(", "  experiment_id = c(\"exp_001\", \"exp_002\", NA, \"exp_003\", \"exp_004\", \"exp_005\"),", 
+"  timestamp     = c(", "    \"2025-07-01 09:00:00\",", "    \"2025-07-01 09:05:00\",", 
+"    \"2025-07-01 09:10:00\",", "  \"202507-01 9-15-00\",   # deliberately malformed", 
+"    \"2025-07-01 09:20:00\",", "    \"2025-07-01 09:25:00\"", 
+"  ),", "  comment       = c(", "    \"##$$\",", "    \"U09NRVRISU5H\", ", 
+"    \"1265435O27\",", "    \"HFRSAVW7Dt\",", "    \"####$%\",", 
+"    \"jiiflpa_\"", "  ),", "  value         = c(12.5, 13.7, 14.1, 11.9, 15.2, 12.7)", 
+")", "", "inventory <- tibble::tibble(", "  item_code = c(", 
+"    \"SE-2025-001\", \"BX-2024-007\", \"lE-2025-002\", \"RE-2025-003\", ", 
 "    \"BX-2022-099\", \"XV-2025-010\", \"AX-2025-005\", \"RE-2024-015\",", 
 "    \"SE-2025-011\", \"lE-2025-012\", \"VO-2025-013\", \"XV-2025-014\"", 
 "  ),", "  measurement = c(42.1, 75.2, 49.7, 38.9, 120.4, 45.3, 33.8, 60.1, 47.0, 25.5, 49.9, 20.1),", 
 "  month = c(", "    \"August\", \"July\", \"August\", \"August\", \"August\", ", 
 "    \"June\", \"August\", \"August\", \"July\", \"July\", \"August\", \"June\"", 
-"  )", ")", "", "safety_manifest <- tibble::tibble(", "  ID = c(", 
-"    \"SE\", \"RE\", \"AX\", \"lE\", \"GT\", \"BX\", \"CZ\", \"MD\", \"QT\", \"LP\", \"VO\", \"XV\"", 
+"  )", ")", "", "", "", "", "# Safety Manifest", "# Only items listed here were cleared for final use", 
+"safety_manifest <- tibble::tibble(", "  ID = c(", "    \"SE\", \"RE\", \"AX\", \"lE\", \"GT\", \"BX\", \"CZ\", \"MD\", \"QT\", \"LP\", \"VO\", \"XV\"", 
 "  ),", "  clearance_level = c(", "    \"high\", \"high\", \"medium\", \"high\", \"high\", \"low\", \"medium\", \"low\", \"high\", \"medium\", \"high\", \"high\"", 
-"  )", ")", "", "# Day 3 Data Setup", "coordinates <- tibble::tibble(", 
-"  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),", 
+"  )", ")", "", "coordinates <- tibble::tibble(", "  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),", 
 "  lon = c(-2.2330, -2.2345, -2.2320, -2.2338, -2.2342, -2.2328, -2.2347),", 
 "  tag = c(\"MQlV\", \"SU4\", \"STg==\", \"gS0l\", NA, \"??4V\", \"SU*4\")", 
-")"), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+")", "", "", "", "# Base64 fragments from earlier days", "# \"Something\" -> \"U29tZXRoaW5n\"", 
+"# \"Hidden\"    -> \"SGlkZGVu\"", "# \"IN KILBURN\" -> \"SU4gS0lMQlVSTg==\"", 
+""), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
     chunks = list(list(label = "day3-solution", code = "# Step 1: Filter valid tags\nvalid_points <- coordinates |> \n  filter(!is.na(tag)) |> \n  filter(str_detect(tag, \"^[A-Za-z0-9=]+$\"))\n\n# Step 2: Plot valid points\nggplot(valid_points, aes(x = lon, y = lat, label = tag)) +\n  geom_point(color = \"blue\", size = 3) +\n  geom_text(vjust = -0.5) +\n  theme_minimal() +\n  labs(title = \"Field Sites — Valid Tags Only\",\n       subtitle = \"Observe the west-to-east alignment to reveal the fragment\",\n       x = \"Longitude\", y = \"Latitude\")\n\n# Step 3: Combine tags from west to east\nfragment <- valid_points |> \n  arrange(lon) |>        # order from west (lowest lon) to east (highest lon)\n  pull(tag) |>           # extract the tags\n  paste(collapse = \"\")   # combine into one string\n\n\n# Step 4: Print the resulting fragment\nfragment", 
         opts = list(label = "\"day3-solution\"", exercise = "TRUE"), 
         engine = "r")), code_check = NULL, error_check = NULL, 
@@ -515,30 +541,32 @@ output$`tutorial-exercise-day4-solution-output` <- renderUI({
 learnr:::store_exercise_cache(structure(list(label = "day4-solution", global_setup = structure(c("library(learnr)", 
 "library(dplyr)", "library(ggplot2)", "library(stringr)", "library(readr)", 
 "library(janitor)", "library(lubridate)", "library(tibble)", 
-"library(tidyr)", "library(purrr)", "library(magrittr)", "library(base64enc)", 
-"", "knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)", 
-"options(tutorial.storage = NULL)", "", "# Day 1 Data Setup", 
-"day1_data <- tibble::tibble(", "  experiment_id = c(\"exp_001\", \"exp_002\", NA, \"exp_003\", \"exp_004\", \"exp_005\"),", 
-"  timestamp = c(", "    \"2025-03-15 14:30:22\", \"2025/03/15 15:45:10\", ", 
-"    \"2025-03-16 09:15:45\", \"CORRUPTED_TIME\", ", "    \"2025-03-17 11:22:33\", \"2025-03-18 16:45:12\"", 
-"  ),", "  measurement = c(42.3, 38.1, NA, 55.7, 41.2, 39.9),", 
-"  comment = c(", "    \"U09NRVRISU5H\", \"baseline reading\", \"HFRSAVW7Dt\", ", 
-"    \"anomaly detected\", \"normal operation\", \"SElEREVO\"", 
-"  )", ")", "", "# Day 2 Data Setup", "inventory <- tibble::tibble(", 
-"  item_code = c(", "    \"SE-2025-001\", \"BX-2024-007\", \"lE-2025-002\", \"RE-2025-003\", ", 
+"library(tidyr)", "library(purrr)", "library(magrittr)", "library(rsconnect)", 
+"library(base64enc)", "", "knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)", 
+"options(tutorial.storage = NULL)", "", "# Raw data the scientist left behind", 
+"", "day1_data <- tibble::tibble(", "  experiment_id = c(\"exp_001\", \"exp_002\", NA, \"exp_003\", \"exp_004\", \"exp_005\"),", 
+"  timestamp     = c(", "    \"2025-07-01 09:00:00\",", "    \"2025-07-01 09:05:00\",", 
+"    \"2025-07-01 09:10:00\",", "  \"202507-01 9-15-00\",   # deliberately malformed", 
+"    \"2025-07-01 09:20:00\",", "    \"2025-07-01 09:25:00\"", 
+"  ),", "  comment       = c(", "    \"##$$\",", "    \"U09NRVRISU5H\", ", 
+"    \"1265435O27\",", "    \"HFRSAVW7Dt\",", "    \"####$%\",", 
+"    \"jiiflpa_\"", "  ),", "  value         = c(12.5, 13.7, 14.1, 11.9, 15.2, 12.7)", 
+")", "", "inventory <- tibble::tibble(", "  item_code = c(", 
+"    \"SE-2025-001\", \"BX-2024-007\", \"lE-2025-002\", \"RE-2025-003\", ", 
 "    \"BX-2022-099\", \"XV-2025-010\", \"AX-2025-005\", \"RE-2024-015\",", 
 "    \"SE-2025-011\", \"lE-2025-012\", \"VO-2025-013\", \"XV-2025-014\"", 
 "  ),", "  measurement = c(42.1, 75.2, 49.7, 38.9, 120.4, 45.3, 33.8, 60.1, 47.0, 25.5, 49.9, 20.1),", 
 "  month = c(", "    \"August\", \"July\", \"August\", \"August\", \"August\", ", 
 "    \"June\", \"August\", \"August\", \"July\", \"July\", \"August\", \"June\"", 
-"  )", ")", "", "safety_manifest <- tibble::tibble(", "  ID = c(", 
-"    \"SE\", \"RE\", \"AX\", \"lE\", \"GT\", \"BX\", \"CZ\", \"MD\", \"QT\", \"LP\", \"VO\", \"XV\"", 
+"  )", ")", "", "", "", "", "# Safety Manifest", "# Only items listed here were cleared for final use", 
+"safety_manifest <- tibble::tibble(", "  ID = c(", "    \"SE\", \"RE\", \"AX\", \"lE\", \"GT\", \"BX\", \"CZ\", \"MD\", \"QT\", \"LP\", \"VO\", \"XV\"", 
 "  ),", "  clearance_level = c(", "    \"high\", \"high\", \"medium\", \"high\", \"high\", \"low\", \"medium\", \"low\", \"high\", \"medium\", \"high\", \"high\"", 
-"  )", ")", "", "# Day 3 Data Setup", "coordinates <- tibble::tibble(", 
-"  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),", 
+"  )", ")", "", "coordinates <- tibble::tibble(", "  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),", 
 "  lon = c(-2.2330, -2.2345, -2.2320, -2.2338, -2.2342, -2.2328, -2.2347),", 
 "  tag = c(\"MQlV\", \"SU4\", \"STg==\", \"gS0l\", NA, \"??4V\", \"SU*4\")", 
-")"), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+")", "", "", "", "# Base64 fragments from earlier days", "# \"Something\" -> \"U29tZXRoaW5n\"", 
+"# \"Hidden\"    -> \"SGlkZGVu\"", "# \"IN KILBURN\" -> \"SU4gS0lMQlVSTg==\"", 
+""), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
     chunks = list(list(label = "day4-solution", code = "# Step 1: Assign the encoded fragments\nencoded1 <- \"U09NRVRISU5H\"\nencoded2 <- \"SElEREVO\"\nencoded3 <- \"SU4gS0lMQlVSTg==\"\n\n# Step 2: Decode each\ndecoded1 <- encoded1 |> base64decode() |> rawToChar()\ndecoded2 <- encoded2 |> base64decode() |> rawToChar()\ndecoded3 <- encoded3 |> base64decode() |> rawToChar()\n\n# Step 3: Combine into one sentence\nfinal_message <- paste(decoded1, decoded2, decoded3)\n\nfinal_message", 
         opts = list(label = "\"day4-solution\"", exercise = "TRUE"), 
         engine = "r")), code_check = NULL, error_check = NULL, 
@@ -579,7 +607,7 @@ learnr:::store_exercise_cache(structure(list(label = "day4-solution", global_set
 <!--/html_preserve-->
 <!--html_preserve-->
 <script type="application/shiny-prerendered" data-context="execution_dependencies">
-{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68]}},"value":[{"type":"character","attributes":{},"value":["backports","base","base64enc","bslib","cachem","checkmate","cli","compiler","datasets","digest","dplyr","evaluate","farver","fastmap","fontawesome","generics","ggplot2","glue","graphics","grDevices","grid","gtable","hms","htmltools","htmlwidgets","httpuv","janitor","jquerylib","jsonlite","knitr","later","learnr","lifecycle","lubridate","magrittr","methods","mime","pillar","pkgconfig","promises","purrr","R6","RColorBrewer","Rcpp","readr","rlang","rmarkdown","rprojroot","rstudioapi","sass","scales","shiny","snakecase","stats","stringi","stringr","tibble","tidyr","tidyselect","timechange","tools","tzdb","utils","vctrs","withr","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["1.5.0","4.5.1","0.1-3","0.9.0","1.1.0","2.3.2","3.6.5","4.5.1","4.5.1","0.6.37","1.1.4","1.0.4","2.1.2","1.2.0","0.5.3","0.1.4","3.5.2","1.8.0","4.5.1","4.5.1","4.5.1","0.3.6","1.1.3","0.5.8.1","1.6.4","1.6.16","2.2.1","0.1.4","2.0.0","1.50","1.4.2","0.11.5","1.0.4","1.9.4","2.0.3","4.5.1","0.13","1.11.0","2.0.3","1.3.3","1.1.0","2.6.1","1.1-3","1.1.0","2.1.5","1.1.6","2.29","2.1.0","0.17.1","0.4.10","1.4.0","1.11.1","0.11.1","4.5.1","1.8.7","1.5.1","3.3.0","1.3.1","1.2.1","0.3.0","4.5.1","0.5.0","4.5.1","0.6.5","3.0.2","0.52","1.8-4","2.3.10"]}]}]}
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69]}},"value":[{"type":"character","attributes":{},"value":["backports","base","base64enc","bslib","cachem","checkmate","cli","compiler","datasets","digest","dplyr","evaluate","farver","fastmap","fontawesome","generics","ggplot2","glue","graphics","grDevices","grid","gtable","hms","htmltools","htmlwidgets","httpuv","janitor","jquerylib","jsonlite","knitr","later","learnr","lifecycle","lubridate","magrittr","methods","mime","pillar","pkgconfig","promises","purrr","R6","RColorBrewer","Rcpp","readr","rlang","rmarkdown","rprojroot","rsconnect","rstudioapi","sass","scales","shiny","snakecase","stats","stringi","stringr","tibble","tidyr","tidyselect","timechange","tools","tzdb","utils","vctrs","withr","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["1.5.0","4.5.1","0.1-3","0.9.0","1.1.0","2.3.2","3.6.5","4.5.1","4.5.1","0.6.37","1.1.4","1.0.4","2.1.2","1.2.0","0.5.3","0.1.4","3.5.2","1.8.0","4.5.1","4.5.1","4.5.1","0.3.6","1.1.3","0.5.8.1","1.6.4","1.6.16","2.2.1","0.1.4","2.0.0","1.50","1.4.2","0.11.5","1.0.4","1.9.4","2.0.3","4.5.1","0.13","1.11.0","2.0.3","1.3.3","1.1.0","2.6.1","1.1-3","1.1.0","2.1.5","1.1.6","2.29","2.1.0","1.5.0","0.17.1","0.4.10","1.4.0","1.11.1","0.11.1","4.5.1","1.8.7","1.5.1","3.3.0","1.3.1","1.2.1","0.3.0","4.5.1","0.5.0","4.5.1","0.6.5","3.0.2","0.52","1.8-4","2.3.10"]}]}]}
 </script>
 <!--/html_preserve-->
 </div>

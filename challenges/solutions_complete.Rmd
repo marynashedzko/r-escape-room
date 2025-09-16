@@ -17,27 +17,35 @@ library(tibble)
 library(tidyr)
 library(purrr)
 library(magrittr)
+library(rsconnect)
 library(base64enc)
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 options(tutorial.storage = NULL)
 
-# Day 1 Data Setup
+# Raw data the scientist left behind
+
 day1_data <- tibble::tibble(
   experiment_id = c("exp_001", "exp_002", NA, "exp_003", "exp_004", "exp_005"),
-  timestamp = c(
-    "2025-03-15 14:30:22", "2025/03/15 15:45:10", 
-    "2025-03-16 09:15:45", "CORRUPTED_TIME", 
-    "2025-03-17 11:22:33", "2025-03-18 16:45:12"
+  timestamp     = c(
+    "2025-07-01 09:00:00",
+    "2025-07-01 09:05:00",
+    "2025-07-01 09:10:00",
+  "202507-01 9-15-00",   # deliberately malformed
+    "2025-07-01 09:20:00",
+    "2025-07-01 09:25:00"
   ),
-  measurement = c(42.3, 38.1, NA, 55.7, 41.2, 39.9),
-  comment = c(
-    "U09NRVRISU5H", "baseline reading", "HFRSAVW7Dt", 
-    "anomaly detected", "normal operation", "SElEREVO"
-  )
+  comment       = c(
+    "##$$",
+    "U09NRVRISU5H", 
+    "1265435O27",
+    "HFRSAVW7Dt",
+    "####$%",
+    "jiiflpa_"
+  ),
+  value         = c(12.5, 13.7, 14.1, 11.9, 15.2, 12.7)
 )
 
-# Day 2 Data Setup
 inventory <- tibble::tibble(
   item_code = c(
     "SE-2025-001", "BX-2024-007", "lE-2025-002", "RE-2025-003", 
@@ -51,6 +59,11 @@ inventory <- tibble::tibble(
   )
 )
 
+
+
+
+# Safety Manifest
+# Only items listed here were cleared for final use
 safety_manifest <- tibble::tibble(
   ID = c(
     "SE", "RE", "AX", "lE", "GT", "BX", "CZ", "MD", "QT", "LP", "VO", "XV"
@@ -60,12 +73,19 @@ safety_manifest <- tibble::tibble(
   )
 )
 
-# Day 3 Data Setup
 coordinates <- tibble::tibble(
   lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),
   lon = c(-2.2330, -2.2345, -2.2320, -2.2338, -2.2342, -2.2328, -2.2347),
   tag = c("MQlV", "SU4", "STg==", "gS0l", NA, "??4V", "SU*4")
 )
+
+
+
+# Base64 fragments from earlier days
+# "Something" -> "U29tZXRoaW5n"
+# "Hidden"    -> "SGlkZGVu"
+# "IN KILBURN" -> "SU4gS0lMQlVSTg=="
+
 ```
 
 
@@ -82,7 +102,7 @@ fragment <- day1_data |>
   # Keep only rows with valid time and fragment
   filter(!is.na(time), !is.na(fragment))
 
-# Show the resulting fragment(s)
+# Show the resulting fragment
 fragment
 ```
 
