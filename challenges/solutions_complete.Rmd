@@ -108,7 +108,7 @@ fragment
 
 
 
-### Solution to Challenge 3
+#### Solution to Challenge 3
 ```{r day3-solution, exercise=TRUE}
 # Step 1: Filter valid tags
 valid_points <- coordinates |> 
@@ -136,7 +136,7 @@ fragment
 ```
 
 
-### Solution to Challenge 4
+#### Solution to Challenge 4
 ```{r day4-solution, exercise=TRUE}
 # Step 1: Assign the encoded fragments
 encoded1 <- "U09NRVRISU5H"
