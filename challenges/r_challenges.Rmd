@@ -1,0 +1,607 @@
+---
+title: "The Lost Lab Notebook"
+output:
+  learnr::tutorial:
+runtime: shiny_prerendered
+
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(readr)
+library(janitor)
+library(lubridate)
+library(tibble)
+library(tidyr)
+library(purrr)
+library(magrittr)
+library(rsconnect)
+library(base64enc)
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(tutorial.storage = NULL)
+
+# Raw data the scientist left behind
+
+day1_data <- tibble::tibble(
+  experiment_id = c("exp_001", "exp_002", NA, "exp_003", "exp_004", "exp_005"),
+  timestamp     = c(
+    "2025-07-01 09:00:00",
+    "2025-07-01 09:05:00",
+    "2025-07-01 09:10:00",
+  "202507-01 9-15-00",   # deliberately malformed
+    "2025-07-01 09:20:00",
+    "2025-07-01 09:25:00"
+  ),
+  comment       = c(
+    "##$$",
+    "U09NRVRISU5H", 
+    "1265435O27",
+    "HFRSAVW7Dt",
+    "####$%",
+    "jiiflpa_"
+  ),
+  value         = c(12.5, 13.7, 14.1, 11.9, 15.2, 12.7)
+)
+
+inventory <- tibble::tibble(
+  item_code = c(
+    "SE-2025-001", "BX-2024-007", "lE-2025-002", "RE-2025-003", 
+    "BX-2022-099", "XV-2025-010", "AX-2025-005", "RE-2024-015",
+    "SE-2025-011", "lE-2025-012", "VO-2025-013", "XV-2025-014"
+  ),
+  measurement = c(42.1, 75.2, 49.7, 38.9, 120.4, 45.3, 33.8, 60.1, 47.0, 25.5, 49.9, 20.1),
+  month = c(
+    "August", "July", "August", "August", "August", 
+    "June", "August", "August", "July", "July", "August", "June"
+  )
+)
+
+
+
+
+# Safety Manifest
+# Only items listed here were cleared for final use
+safety_manifest <- tibble::tibble(
+  ID = c(
+    "SE", "RE", "AX", "lE", "GT", "BX", "CZ", "MD", "QT", "LP", "VO", "XV"
+  ),
+  clearance_level = c(
+    "high", "high", "medium", "high", "high", "low", "medium", "low", "high", "medium", "high", "high"
+  )
+)
+
+coordinates <- tibble::tibble(
+  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),
+  lon = c(-2.2330, -2.2345, -2.2320, -2.2338, -2.2342, -2.2328, -2.2347),
+  tag = c("MQlV", "SU4", "STg==", "gS0l", NA, "??4V", "SU*4")
+)
+
+
+
+# Base64 fragments from earlier days
+# "Something" -> "U29tZXRoaW5n"
+# "Hidden"    -> "SGlkZGVu"
+# "IN KILBURN" -> "SU4gS0lMQlVSTg=="
+
+```
+
+---
+
+## Introduction
+Welcome to the **Lost Lab Notebook** challenge!
+This is my first attempt at creating a challenge like this. I put it together because I really love R, and I wanted to create something that helps others explore it in a fun, hands-on way. The idea behind The Lost Lab Notebook is to make learning feel like solving a mystery — where every line of code brings you closer to uncovering the story. I hope you enjoy working through the puzzles as much as I enjoyed designing them!
+
+This challenge is aimed at beginners who have a little bit of experience with R, especially if you’ve used ggplot2 or dplyr before. But don’t worry — you don’t need to be an expert! If you ever get stuck, feel free to use any resources
+
+
+### How it works
+
+* The code for each exercise is partially written — your job is to finish it off
+* You don’t need to import any libraries — they’re already loaded for you. These include `dplyr`, `ggplot2`, `stringr`, `lubridate`, `janitor`, `tibble`, `tidyr`, `purrr`, and `magrittr`. We believe these are more than enough to complete the challenges. However, if you feel like you need something else, you can contact me at maryna.shedzko@manchester.ac.uk
+* You’ll see some questions and coding exercises — try them out, and don’t worry if you need to retry
+* Everything runs in R right in your browser — just write and run code in the provided boxes
+* If you have any questions, please contact maryna.shedzko@manchester.ac.uk
+
+### What You'll Practice
+
+Throughout the challenge, you'll:
+
+* Clean and filter messy datasets
+* Work with spatial and coordinate data
+* Manipulate strings and encoded text
+* Piece together a narrative from clues
+
+
+## Challenge 1
+
+### 🧭 Welcome, Investigator
+
+You’ve unearthed a forgotten research drive from a long‑abandoned experiment. 
+Inside you find a corrupted CSV: messy timestamps, cryptic notes, and—rumour has it — a *hidden* fragment of a larger message.  
+Your first mission is to clean this chaos and extract the fragment.
+
+### Take a Peek
+Have a look at the raw file to get your bearings.
+
+```{r peek, exercise = FALSE}
+day1_data
+```
+
+---
+
+
+### 🧪 Your Mission
+
+Your goal is to **clean a messy experiment log just enough** to find a hidden message—one valid comment that survived the chaos.
+
+We’ve already given you a head start:
+
+- We've **removed any rows where the `experiment_id` is missing**
+- We’ve tried to convert the `timestamp` column into a proper date-time format using `lubridate::parse_date_time()` and stored the result in a new column called `time`
+- We’ve stored the result in a variable called `fragment`
+
+Now it's your turn!
+
+### 🔍 What You Need to Do
+
+1. Check the newly created `time` column and keep only rows where the conversion succeeded (i.e. `timestamp` is not `NA`).
+
+1. Create a new column called `fragment`. This column should contain the `comment` value **only if** it's fully alphanumeric (A–Z, a–z, 0–9). Everything else will be set to `NA`.
+
+1. Filter the data to keep only rows where `fragment` is not missing.
+
+This will reveal the surviving message fragment.
+
+
+```{r mission, exercise = TRUE, exercise.lines = 10}
+fragment <- day1_data |> 
+  filter(!is.na(experiment_id)) |> 
+  mutate(
+    time = parse_date_time(timestamp, orders = c("ymd HMS", "Ymd HMS"))
+  ) |> 
+  # YOUR CODE GOES HERE
+  
+#inspect the result
+fragment
+```
+
+```{r mission-hint-1}
+# Use filter() to keep only rows where the time column is not NA.
+```
+
+```{r mission-hint-2}
+# Use str_detect() to check if comment matches the pattern "^[A-Za-z0-9]+$"
+```
+
+```{r mission-hint-3}
+# Use filter() to remove rows with NA in the fragment column
+```
+
+
+```{r mission-solution, exercise.reveal_solution = FALSE}
+fragment <- day1_data |> 
+  filter(!is.na(experiment_id)) |> 
+  mutate(
+    time = parse_date_time(timestamp, orders = c("ymd HMS", "Ymd HMS")),
+    fragment = ifelse(str_detect(comment, "^[A-Za-z0-9]+$"), comment, NA_character_)
+  )  |> 
+  filter(!is.na(time), !is.na(fragment))
+
+fragment
+```
+
+---
+
+### Submit Your Answer
+What *is* the surviving fragment?
+
+```{r question, echo = FALSE}
+question_text(
+  "Enter the surviving fragment:",
+  answer("U09NRVRISU5H	", correct = TRUE),
+  answer("HFRSAVW7Dt", message = "Close, but not quite—double‑check your filters!"),
+  allow_retry = TRUE
+)
+```
+
+Congratulations! You’ve wrestled Day 1’s chaos into order and pried loose the first piece of the Lab’s secret! 
+
+📝 Make a note of the fragment you found — you’ll need it to unlock clues in a future challenge.
+
+See you next week!
+
+## Challenge 2
+
+### ✨ Recap & New Discovery
+
+Your data recovery efforts are paying off. Today, you've decrypted another corrupted **inventory_final.csv**
+
+At first glance, it looks like a standard inventory list — but buried in a separate directory, you found a Safety Manifest. It lists the only equipment types cleared for use in the final phase of the experiment.
+
+According to the scientist’s notebook:
+
+> *The manifest overrides all other rules. Only items listed there, from August, with measurements under 50 were used. Their IDs are crucial.*
+
+------------------------------------------------------------------------
+
+### 🔍 Step 1 — Explore the File
+
+```{r peek_inv, exercise=FALSE}
+inventory
+```
+
+```{r peek_safety, exercise=FALSE}
+safety_manifest
+```
+
+------------------------------------------------------------------------
+
+### 🧪 Your Mission
+
+You’re getting the hang of this. Let’s clean one more file.
+
+We’ve already helped by **filtering** the data to keep only **safe items (measurement \< 50)**
+
+Now it’s your turn to finish the job.
+
+------------------------------------------------------------------------
+
+### 🛠️ What You Need to Do
+
+The scientist used only specific, approved equipment. To recover the secret fragment, you need to:
+
+1.  Split the `item_code` into three parts: ID (e.g. "`AX`"), year (e.g. "`2025`"), number (e.g. "`001`")
+
+2.  Join the `inventory` with the `safety_manifest` so only approved types remain.
+
+3.  Keep only rows From "August" and with "high" clearance level.
+
+4.  Take the `ID` values from the resulting rows and combine them into a single string.
+
+------------------------------------------------------------------------
+
+### Start Here
+
+```{r mission2, exercise=TRUE, exercise.lines=10}
+# We've already filtered out unsafe data
+fragment <- inventory |> 
+  filter(measurement < 50) |>
+  # YOUR CODE HERE
+  
+  
+# inspect the result
+fragment
+```
+
+```{r mission2-hint-1}
+# Use separate() to split the item_code
+```
+
+```{r mission2-hint-2}
+# Use inner_join() with safety_manifest to keep only approved equipment types
+```
+
+```{r mission2-hint-3}
+# Use filter() to keep only rows from August and with high clearance
+```
+
+```{r mission2-hint-4}
+# Use pull(type) to get just the type column
+```
+
+```{r mission2-hint-5}
+# Use paste0(collapse = "") to combine the type codes into one string
+```
+
+```{r mission2-solution, exercise.reveal_solution=FALSE, include = FALSE}
+fragment <- inventory |> 
+  filter(measurement < 50) |>
+  # Step 1: split item_code into type, year, id
+  separate(item_code, into = c("ID", "year", "number"), sep = "-") |> 
+  
+  # Step 2: join with safety_manifest to keep only approved types
+  inner_join(safety_manifest, by = "ID") |> 
+  
+  # Step 3: filter for August and measurement < 50
+  filter( month == "August", clearance_level == "high") |>
+  
+  # Step 4: extract the type column and collapse into a single string
+  pull(ID) |> 
+  paste0(collapse = "")
+  
+fragment
+```
+
+------------------------------------------------------------------------
+
+### Submit Your Answer
+
+What is the decoded fragment?
+
+```{r question-2, echo=FALSE}
+question_text(
+  "Enter the fragment from the safe item types:",
+  answer("SElEREVO", correct = TRUE),
+  answer("003010", message = "That looks like IDs, not types."),
+  answer("001002003010", message = "Double check the instructions — you're combining type codes, not IDs."),
+  answer("SElEREAXVO", message = "Check clearance levels!"),
+  allow_retry = TRUE
+)
+
+```
+
+------------------------------------------------------------------------
+
+### Well Done
+
+You've unlocked the **second fragment**. Piece by piece, the truth behind the Scientists work is starting to emerge. What was she building? And why did she hide it?
+
+📝 Save this fragment—it's part of a much bigger secret.
+
+See you next week!
+
+------------------------------------------------------------------------
+
+## Challenge 3
+ 
+### 🧭 Recap: The Map Unfolds
+
+During her last journey, the scientist recorded several key sites, noting their GPS coordinates along with secret tags. Some of these tags got corrupted or went missing along the way.
+
+Your goal is to filter the data to keep only the valid tags, plot the known sites, and reconstruct the next fragment of the notebook by reading the tags from west to east. Each fragment brings you closer to uncovering the hidden location.
+
+------------------------------------------------------------------------
+
+###  Step 1 — Look Around
+
+```{r peek-coords, exercise=FALSE}
+as.data.frame(coordinates)
+```
+
+### 🧪 Your Mission
+
+Nice work so far! Next, we’ll clean one more file.
+
+We’ve already helped by **filtering** the data to keep only **non-missing tags**
+
+Now it’s your turn to finish the job.
+
+------------------------------------------------------------------------
+
+### 🛠️ What You Need to Do
+1. Valid tags should be alphanumeric and can include `=`. Filter out the invalid tags.
+
+1. Plot these points and label them with their tags.
+
+1. Arrange the remaining points from west to east (programmatically or visually)
+
+1. the tags in this west-to-east order and combine them into a single string. This string is the next fragment of the notebook.
+
+------------------------------------------------------------------------
+
+### Start here
+
+```{r mission3, exercise=TRUE, exercise.lines=10}
+valid_points <- coordinates |> 
+  filter(!is.na(tag)) |> 
+# YOUR CODE HERE
+
+ggplot(valid_points) # YOUR CODE HERE 
+       
+fragment <- # YOUR CODE HERE   
+ 
+ 
+fragment
+```
+
+```{r mission3-hint-1}
+# Use str_detect() to check if the tag matches the pattern "^[A-Za-z0-9=]+$"
+```
+
+```{r mission3-hint-2}
+# Use slice_max(lat) to find the northernmost point
+```
+
+```{r mission3-hint-3}
+# Use arrange() to order points from east to west
+```
+
+```{r mission3-hint-4}
+# Use pull() and paste(collapse = "") to extract and print the tags as one string
+```
+
+
+```{r mission3-solution, exercise.reveal_solution=FALSE}
+# Step 1: Filter valid tags
+valid_points <- coordinates |> 
+  filter(!is.na(tag)) |> 
+  filter(str_detect(tag, "^[A-Za-z0-9=]+$"))
+
+# Step 2: Plot valid points
+ggplot(valid_points, aes(x = lon, y = lat, label = tag)) +
+  geom_point(color = "blue", size = 3) +
+  geom_text(vjust = -0.5) +
+  theme_minimal() +
+  labs(title = "Field Sites — Valid Tags Only",
+       subtitle = "Observe the west-to-east alignment to reveal the fragment",
+       x = "Longitude", y = "Latitude")
+
+# Step 3: Combine tags from west to east
+fragment <- valid_points |> 
+  arrange(lon) |>        # order from west (lowest lon) to east (highest lon)
+  pull(tag) |>           # extract the tags
+  paste(collapse = "")   # combine into one string
+
+
+# Step 4: Print the resulting fragment
+fragment
+```
+
+------------------------------------------------------------------------
+
+### Submit Your Answer
+
+Which is the valid fragment? 
+```{r question3, echo=FALSE}
+question_text(
+  "Enter the fragment:",
+  answer("SU4gS0lMQlVSTg==", correct = TRUE),
+  answer("SU4gTElCUkFSWQ==", message = "Close, but check the latitudes again."),
+  allow_retry = TRUE
+)
+
+```
+
+------------------------------------------------------------------------
+
+### Well Done
+
+You've found the third fragment!
+
+📝 Save this fragment—it's part of a much bigger secret.
+
+See you next week!
+
+------------------------------------------------------------------------
+
+
+
+## Challenge 4
+
+You’ve gathered three fragments across three days — but all were encoded. The scientist encoded her final message. Now it’s your job to decode it.
+
+Submit all **three fragments** you recovered. Without all of them, the truth stays buried.
+
+---
+
+### Submit Your Fragments
+
+#### Fragment 1 — From the corrupted logs (Day 1)
+
+```{r question4, echo=FALSE}
+quiz(
+  question_text(
+    "What was the fragment from Day 1?",
+    answer("U09NRVRISU5H", correct = TRUE),
+    allow_retry = TRUE
+  )
+)
+```
+
+#### Fragment 2 — From the inventory data (Day 2)
+
+```{r question5, echo=FALSE}
+quiz(
+  question_text(
+    "What was the fragment from Day 2?",
+    answer("SElEREVO", correct = TRUE),
+    allow_retry = TRUE
+  )
+)
+```
+
+#### Fragment 3 — From the coordinate (Day 3)
+
+```{r question6, echo=FALSE}
+quiz(
+  question_text(
+    "What was the tag from Day 3?",
+    answer("SU4gS0lMQlVSTg==", correct = TRUE),
+    allow_retry = TRUE
+  )
+)
+```
+
+---
+
+### Fragments Verified
+
+Well done — you’ve recovered all encrypted clues. Now it’s time to decode them and reveal the final message the scientist left behind.
+
+### A Strange Pattern…
+The fragments look like random strings — but notice the `=` at the end of one?  
+That’s suspicious. While digging through the scientist’s `.Rhistory`, you find just one command:
+
+```{r base64, exercise=TRUE}
+# run this
+?base64encode
+```
+
+```{r base64-hint-1}
+# it should open the documentation page in the new tab. 
+# If it didn't work, google base64encode
+```
+
+
+Could that be the key? What function might undo this encoding?
+
+
+### 🧪 Your Mission
+
+1. Look up the help page for `base64encode`
+
+1. Figure out how to reverse the process
+
+1. Decode each fragment into readable text
+
+1. Combine them into one sentence
+
+
+### Start Here
+
+```{r mission4, exercise=TRUE, exercise.lines=15}
+# Step 1: Assign the encoded fragments
+encoded1 <- # ANSWER FROM DAY 1
+encoded2 <- # ANSWER FROM DAY 2
+encoded3 <- # ANSWER FROM DAY 3
+  
+# Step 2: Decode each
+decoded1 <- encoded1 |> # YOUR CODE HERE
+decoded2 <- encoded2 |> # YOUR CODE HERE
+decoded3 <- encoded3 |> # YOUR CODE HERE
+
+# Step 3: Combine into one sentence
+final_message <- # YOUR CODE HERE
+
+final_message
+```
+
+```{r mission4-hint-1}
+# When you try decoding, the result doesn’t look like normal text. It’s raw data. Perhaps there’s a way to turn raw bytes into readable characters?
+```
+
+```{r mission4-hint-2}
+# base64decode() gives you a raw vector. Search ?rawToChar to see how to turn that into human-readable text.
+```
+
+```{r mission4-solution, exercise.reveal_solution=FALSE, echo = FALSE, include= FALSE}
+# Step 1: Assign the encoded fragments
+encoded1 <- "U09NRVRISU5H"
+encoded2 <- "SElEREVO"
+encoded3 <- "SU4gS0lMQlVSTg=="
+
+# Step 2: Decode each
+decoded1 <- encoded1 |> base64decode() |> rawToChar()
+decoded2 <- encoded2 |> base64decode() |> rawToChar()
+decoded3 <- encoded3 |> base64decode() |> rawToChar()
+
+# Step 3: Combine into one sentence
+final_message <- paste(decoded1, decoded2, decoded3)
+
+final_message
+```
+
+### Success!
+
+You've uncovered the message the scientist left behind!  
+
+Something is waiting for you... and you might just be the first to find it.  
+
+But this isn’t the end — one last piece remains hidden.  
+Come back next week for the **final clue and the full reveal**.  
+(No challenge, just answers.)
+

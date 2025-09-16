@@ -1,0 +1,156 @@
+---
+title: "Lost Lab Notebook: Solutions"
+output:
+  learnr::tutorial:
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(readr)
+library(janitor)
+library(lubridate)
+library(tibble)
+library(tidyr)
+library(purrr)
+library(magrittr)
+library(base64enc)
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(tutorial.storage = NULL)
+
+# Day 1 Data Setup
+day1_data <- tibble::tibble(
+  experiment_id = c("exp_001", "exp_002", NA, "exp_003", "exp_004", "exp_005"),
+  timestamp = c(
+    "2025-03-15 14:30:22", "2025/03/15 15:45:10", 
+    "2025-03-16 09:15:45", "CORRUPTED_TIME", 
+    "2025-03-17 11:22:33", "2025-03-18 16:45:12"
+  ),
+  measurement = c(42.3, 38.1, NA, 55.7, 41.2, 39.9),
+  comment = c(
+    "U09NRVRISU5H", "baseline reading", "HFRSAVW7Dt", 
+    "anomaly detected", "normal operation", "SElEREVO"
+  )
+)
+
+# Day 2 Data Setup
+inventory <- tibble::tibble(
+  item_code = c(
+    "SE-2025-001", "BX-2024-007", "lE-2025-002", "RE-2025-003", 
+    "BX-2022-099", "XV-2025-010", "AX-2025-005", "RE-2024-015",
+    "SE-2025-011", "lE-2025-012", "VO-2025-013", "XV-2025-014"
+  ),
+  measurement = c(42.1, 75.2, 49.7, 38.9, 120.4, 45.3, 33.8, 60.1, 47.0, 25.5, 49.9, 20.1),
+  month = c(
+    "August", "July", "August", "August", "August", 
+    "June", "August", "August", "July", "July", "August", "June"
+  )
+)
+
+safety_manifest <- tibble::tibble(
+  ID = c(
+    "SE", "RE", "AX", "lE", "GT", "BX", "CZ", "MD", "QT", "LP", "VO", "XV"
+  ),
+  clearance_level = c(
+    "high", "high", "medium", "high", "high", "low", "medium", "low", "high", "medium", "high", "high"
+  )
+)
+
+# Day 3 Data Setup
+coordinates <- tibble::tibble(
+  lat = c(53.4679, 53.4695, 53.4655, 53.4622, 53.4638, 53.4650, 53.4636),
+  lon = c(-2.2330, -2.2345, -2.2320, -2.2338, -2.2342, -2.2328, -2.2347),
+  tag = c("MQlV", "SU4", "STg==", "gS0l", NA, "??4V", "SU*4")
+)
+```
+
+
+#### Solution to Challenge 1
+```{r day1-solution, exercise=TRUE}
+# Filter out rows with missing experiment_id
+fragment <- day1_data |> 
+  filter(!is.na(experiment_id)) |> 
+  # Parse timestamp and extract valid fragments from comment
+  mutate(
+    time = parse_date_time(timestamp, orders = c("ymd HMS", "Ymd HMS")),
+    fragment = ifelse(str_detect(comment, "^[A-Za-z0-9]+$"), comment, NA_character_)
+  )  |> 
+  # Keep only rows with valid time and fragment
+  filter(!is.na(time), !is.na(fragment))
+
+# Show the resulting fragment(s)
+fragment
+```
+
+#### Solution to Challenge 2
+```{r day2-solution, exercise=TRUE}
+fragment <- inventory |> 
+  filter(measurement < 50) |>
+  # Step 1: split item_code into type, year, id
+  separate(item_code, into = c("ID", "year", "number"), sep = "-") |> 
+  
+  # Step 2: join with safety_manifest to keep only approved types
+  inner_join(safety_manifest, by = "ID") |> 
+  
+  # Step 3: filter for August and measurement < 50
+  filter( month == "August", clearance_level == "high") |>
+  
+  # Step 4: extract the type column and collapse into a single string
+  pull(ID) |> 
+  paste0(collapse = "")
+  
+fragment
+```
+
+
+
+### Solution to Challenge 3
+```{r day3-solution, exercise=TRUE}
+# Step 1: Filter valid tags
+valid_points <- coordinates |> 
+  filter(!is.na(tag)) |> 
+  filter(str_detect(tag, "^[A-Za-z0-9=]+$"))
+
+# Step 2: Plot valid points
+ggplot(valid_points, aes(x = lon, y = lat, label = tag)) +
+  geom_point(color = "blue", size = 3) +
+  geom_text(vjust = -0.5) +
+  theme_minimal() +
+  labs(title = "Field Sites — Valid Tags Only",
+       subtitle = "Observe the west-to-east alignment to reveal the fragment",
+       x = "Longitude", y = "Latitude")
+
+# Step 3: Combine tags from west to east
+fragment <- valid_points |> 
+  arrange(lon) |>        # order from west (lowest lon) to east (highest lon)
+  pull(tag) |>           # extract the tags
+  paste(collapse = "")   # combine into one string
+
+
+# Step 4: Print the resulting fragment
+fragment
+```
+
+
+### Solution to Challenge 4
+```{r day4-solution, exercise=TRUE}
+# Step 1: Assign the encoded fragments
+encoded1 <- "U09NRVRISU5H"
+encoded2 <- "SElEREVO"
+encoded3 <- "SU4gS0lMQlVSTg=="
+
+# Step 2: Decode each
+decoded1 <- encoded1 |> base64decode() |> rawToChar()
+decoded2 <- encoded2 |> base64decode() |> rawToChar()
+decoded3 <- encoded3 |> base64decode() |> rawToChar()
+
+# Step 3: Combine into one sentence
+final_message <- paste(decoded1, decoded2, decoded3)
+
+final_message
+```
+
